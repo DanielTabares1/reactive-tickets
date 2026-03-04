@@ -1,3 +1,7 @@
 spring:
   application:
     name: reactive-tickets
+  r2dbc:
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    url: ${DATABASE_URL}
