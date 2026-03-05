@@ -3,9 +3,9 @@ package com.dani.reactive_tickets.application.validation;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -16,16 +16,17 @@ public class ObjectValidator {
 
     private final Validator validator;
 
-    @SneakyThrows
-    public <T> T validate (T object){
-        Set<ConstraintViolation<T>> errors = validator.validate(object);
-        if (errors.isEmpty()){
+    public <T> Mono<T> validate(T object) {
+        return Mono.fromCallable(() -> {
+            Set<ConstraintViolation<T>> errors = validator.validate(object);
+            if (!errors.isEmpty()) {
+                String message = errors.stream()
+                        .map(ConstraintViolation::getMessage)
+                        .collect(Collectors.joining(", "));
+                throw new ValidatorException(message);
+            }
             return object;
-        }
-        else {
-            String message = errors.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining(", "));
-            throw new ValidatorException(HttpStatus.BAD_REQUEST, message);
-        }
+        }).subscribeOn(Schedulers.boundedElastic());
     }
 
 }

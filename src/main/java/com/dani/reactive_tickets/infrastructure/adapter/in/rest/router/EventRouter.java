@@ -11,7 +11,8 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 @Configuration
 public class EventRouter {
 
-    private static final String PATH = "api/v1/event";
+    private static final String EVENT_PATH = "/api/v1/event";
+    private static final String ID_PATH = "/{id}";
 
     @Bean
     public WebProperties.Resources resources() {
@@ -21,7 +22,9 @@ public class EventRouter {
     @Bean
     RouterFunction<ServerResponse> router(EventHandler handler) {
         return RouterFunctions.route()
-                .POST(PATH, handler::createEvent)
+                .POST(EVENT_PATH, handler::createEvent)
+                .GET(EVENT_PATH, handler::getEvents)
+                .GET(EVENT_PATH + ID_PATH, handler::getEventById)
                 .build();
     }
 

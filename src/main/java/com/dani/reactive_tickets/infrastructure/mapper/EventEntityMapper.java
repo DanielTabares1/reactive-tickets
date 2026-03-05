@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class EventEntityMapper {
-    public Event toDomain(EventEntity eventEntity){
+    public Event toDomain(EventEntity eventEntity) {
         return Event.builder()
                 .id(eventEntity.getId())
                 .name(eventEntity.getName())
@@ -19,6 +19,21 @@ public class EventEntityMapper {
                 .createdAt(eventEntity.getCreatedAt())
                 .updatedAt(eventEntity.getUpdatedAt())
                 .version(eventEntity.getVersion())
+                .build();
+    }
+
+    public EventEntity toEntity(Event event) {
+        return EventEntity.builder()
+                .id(event.getId())
+                .name(event.getName())
+                .description(event.getDescription())
+                .eventDate(event.getEventDate())
+                .site(event.getSite())
+                .status(event.getEventStatus().name())
+                .imageUrl(event.getImageUrl())
+                .createdAt(event.getCreatedAt())
+                .updatedAt(event.getUpdatedAt())
+                .version(event.getVersion())
                 .build();
     }
 }
