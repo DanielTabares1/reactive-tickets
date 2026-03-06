@@ -1,6 +1,7 @@
 package com.dani.reactive_tickets.infrastructure.adapter.in.rest.handler;
 
 import com.dani.reactive_tickets.application.dto.EventRequest;
+import com.dani.reactive_tickets.application.dto.EventStatusChangeRequest;
 import com.dani.reactive_tickets.application.service.EventService;
 import com.dani.reactive_tickets.application.validation.ObjectValidator;
 import com.dani.reactive_tickets.application.validation.ValidatorException;
@@ -16,13 +17,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -78,6 +79,46 @@ public class EventHandler {
                         new InvalidEventIdException("Invalid event ID format")
                 )
                 .flatMap(eventService::getEventById)
+                .flatMap(event -> ServerResponse
+                        .ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(eventResponseMapper.toResponse(event))
+                );
+    }
+
+    public Mono<ServerResponse> updateEvent(ServerRequest request) {
+        return Mono.fromCallable(() -> Integer.parseInt(request.pathVariable("id")))
+                .onErrorMap(NumberFormatException.class, e ->
+                        new InvalidEventIdException("Invalid event ID format")
+                )
+                .zipWith(request.bodyToMono(EventRequest.class)
+                        .flatMap(objectValidator::validate)
+                )
+                .flatMap(tuple -> {
+                    int id = tuple.getT1();
+                    EventRequest eventRequest = tuple.getT2();
+                    return eventService.update(id, eventRequest);
+                })
+                .flatMap(event -> ServerResponse
+                        .ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(eventResponseMapper.toResponse(event))
+                );
+    }
+
+    public Mono<ServerResponse> updateStatus(ServerRequest request) {
+        return Mono.fromCallable(() -> Integer.parseInt(request.pathVariable("id")))
+                .onErrorMap(NumberFormatException.class, e ->
+                        new InvalidEventIdException("Invalid event ID format")
+                )
+                .zipWith(request.bodyToMono(EventStatusChangeRequest.class)
+                        .flatMap(objectValidator::validate)
+                )
+                .flatMap(tuple -> {
+                    int id = tuple.getT1();
+                    EventStatusChangeRequest eventStatusChangeRequest = tuple.getT2();
+                    return eventService.updateStatus(id, eventStatusChangeRequest.getStatus());
+                })
                 .flatMap(event -> ServerResponse
                         .ok()
                         .contentType(MediaType.APPLICATION_JSON)

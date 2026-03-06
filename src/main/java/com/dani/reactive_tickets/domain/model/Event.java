@@ -7,6 +7,8 @@ import lombok.*;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -47,6 +49,34 @@ public class Event {
             throw new InvalidEventStartDateException(
                     "Event must start at least 7 days from today"
             );
+        }
+    }
+
+    public void validateStatusChange(String newStatus) {
+        validateStatusExists(newStatus);
+        validateStatusTransition(newStatus);
+    }
+
+    private void validateStatusExists(String newStatus) {
+        try {
+            EventStatus.valueOf(newStatus);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidEventStatusException("Invalid status: " + newStatus);
+        }
+    }
+
+    private void validateStatusTransition(String newStatus) {
+        EventStatus newStatusEnum = EventStatus.valueOf(newStatus);
+
+        Map<EventStatus, List<EventStatus>> allowedTransitions = Map.of(
+                EventStatus.PUBLISHED, List.of(EventStatus.SOLD_OUT, EventStatus.CANCELLED, EventStatus.COMPLETED),
+                EventStatus.SOLD_OUT, List.of(EventStatus.CANCELLED, EventStatus.COMPLETED),
+                EventStatus.CANCELLED, List.of(),
+                EventStatus.COMPLETED, List.of()
+        );
+
+        if (!allowedTransitions.get(this.eventStatus).contains(newStatusEnum)) {
+            throw new InvalidEventStatusException("Cannot transition from " + this.eventStatus + " to " + newStatusEnum);
         }
     }
 }
