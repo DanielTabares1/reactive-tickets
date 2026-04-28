@@ -2,7 +2,6 @@ package com.dani.reactive_tickets.application.dto;
 
 import com.dani.reactive_tickets.application.validation.ValidEventStatus;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

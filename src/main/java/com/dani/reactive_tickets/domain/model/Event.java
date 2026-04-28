@@ -3,7 +3,9 @@ package com.dani.reactive_tickets.domain.model;
 import com.dani.reactive_tickets.domain.exception.InvalidEventStartDateException;
 import com.dani.reactive_tickets.domain.exception.InvalidEventStatusException;
 import com.dani.reactive_tickets.domain.model.vo.EventStatus;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -11,22 +13,20 @@ import java.util.List;
 import java.util.Map;
 
 @Getter
-@Setter
 @AllArgsConstructor
-@NoArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class Event {
 
-    private Integer id;
-    private String name;
-    private String description;
-    private Instant eventDate;
-    private String site;
-    private EventStatus eventStatus;
-    private String imageUrl;
-    private Instant createdAt;
-    private Instant updatedAt;
-    private Long version;
+    private final Integer id;
+    private final String name;
+    private final String description;
+    private final Instant eventDate;
+    private final String site;
+    private final EventStatus eventStatus;
+    private final String imageUrl;
+    private final Instant createdAt;
+    private final Instant updatedAt;
+    private final Long version;
 
     public void validate() {
         validateInitialStatus();
@@ -78,5 +78,22 @@ public class Event {
         if (!allowedTransitions.get(this.eventStatus).contains(newStatusEnum)) {
             throw new InvalidEventStatusException("Cannot transition from " + this.eventStatus + " to " + newStatusEnum);
         }
+    }
+
+    public Event withUpdatedInfo(String name, String description, Instant eventDate, String site, String imageUrl) {
+        return this.toBuilder()
+                .name(name)
+                .description(description)
+                .eventDate(eventDate)
+                .site(site)
+                .imageUrl(imageUrl)
+                .updatedAt(Instant.now())
+                .build();
+    }
+
+    public Event withStatus(EventStatus eventStatus) {
+        return this.toBuilder()
+                .eventStatus(eventStatus)
+                .build();
     }
 }

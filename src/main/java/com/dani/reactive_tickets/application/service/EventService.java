@@ -6,7 +6,6 @@ import com.dani.reactive_tickets.application.port.in.CreateEventUseCase;
 import com.dani.reactive_tickets.application.port.in.GetEventUseCase;
 import com.dani.reactive_tickets.application.port.in.UpdateEventUseCase;
 import com.dani.reactive_tickets.application.port.out.EventRepository;
-import com.dani.reactive_tickets.domain.exception.EventNotFoundException;
 import com.dani.reactive_tickets.domain.model.Event;
 import com.dani.reactive_tickets.domain.model.vo.EventStatus;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -50,7 +47,7 @@ public class EventService implements CreateEventUseCase, GetEventUseCase, Update
     public Mono<Event> getEventById(Integer id) {
         return eventRepository.getEventById(id)
                 .doOnSubscribe(s -> log.debug("Fetching event with id: {}", id))
-                .doOnSuccess(event -> log.debug("Event found: {}", event.getName()))
+                .doOnNext(event -> log.debug("Event found: {}", event.getName()))
                 .doOnError(error -> log.error("Error fetching event with id: {}", id, error));
     }
 
@@ -64,15 +61,15 @@ public class EventService implements CreateEventUseCase, GetEventUseCase, Update
     @Override
     public Mono<Event> update(int id, EventRequest request) {
         return eventRepository.getEventById(id)
-                .map(event -> {
-                    event.setName(request.getName());
-                    event.setDescription(request.getDescription());
-                    event.setEventDate(request.getEventDate());
-                    event.setSite(request.getSite());
-                    event.setImageUrl(request.getImageUrl());
-                    event.setUpdatedAt(Instant.now());
-                    return event;
-                })
+                .map(event ->
+                        event.withUpdatedInfo(
+                                request.getName(),
+                                request.getDescription(),
+                                request.getEventDate(),
+                                request.getSite(),
+                                request.getImageUrl()
+                        )
+                )
                 .doOnNext(Event::validate)
                 .flatMap(eventRepository::save);
     }
@@ -82,10 +79,9 @@ public class EventService implements CreateEventUseCase, GetEventUseCase, Update
     public Mono<Event> updateStatus(int id, String status) {
         return eventRepository.getEventById(id)
                 .doOnNext(event -> event.validateStatusChange(status))
-                .map(event -> {
-                    event.setEventStatus(EventStatus.valueOf(status));
-                    return event;
-                })
+                .map(event ->
+                        event.withStatus(EventStatus.valueOf(status))
+                )
                 .flatMap(eventRepository::save);
     }
 }
